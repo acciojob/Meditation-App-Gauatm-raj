@@ -1,59 +1,79 @@
-//your JS code here. If required.
-document.addEventListener('DOMContentLoaded', function () {
-  const meditationVideo = document.getElementById('meditationVideo');
-  const meditationAudio = document.getElementById('meditationAudio');
-  const audioSource = document.getElementById('audioSource');
-  const timeDisplay = document.querySelector('.time-display');
-  const playButton = document.querySelector('.play');
-  let timer;
+const app = document.getElementById('app');
+const video = document.getElementById('video');
+const audio = document.getElementById('audio');
+const playButton = document.querySelector('.play');
+const timeDisplay = document.querySelector('.time-display');
+const timeButtons = document.querySelectorAll('.time-select button');
+const soundButtons = document.querySelectorAll('.sound-picker button');
 
-  function changeSound(soundFile) {
-    audioSource.src = `Sounds/${soundFile}`;
-    meditationAudio.load();
-    if (meditationAudio.paused) {
-      meditationAudio.play();
-    }
-  }
+let duration = 600; // Default duration is 10 minutes (600 seconds)
+let interval;
+let isPlaying = false;
 
-  function setMeditationTime(minutes) {
-    const seconds = minutes * 60;
-    updateDisplay(seconds);
-    clearInterval(timer);
-    timer = setInterval(() => {
-      if (seconds > 0) {
-        seconds--;
-        updateDisplay(seconds);
-      } else {
-        clearInterval(timer);
-        meditationAudio.pause();
-        meditationVideo.pause();
+// Function to update the timer display
+function updateTimerDisplay() {
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    timeDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
+
+// Event listeners for time buttons
+timeButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        clearInterval(interval);
+        duration = this.id === 'smaller-mins' ? 120 : this.id === 'medium-mins' ? 300 : 600;
+        updateTimerDisplay();
         playButton.textContent = 'Play';
-      }
-    }, 1000);
-  }
-
-  function updateDisplay(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    const display = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
-    timeDisplay.textContent = display;
-  }
-
-  function togglePlayPause() {
-    if (meditationAudio.paused) {
-      meditationAudio.play();
-      meditationVideo.play();
-      playButton.textContent = 'Pause';
-    } else {
-      meditationAudio.pause();
-      meditationVideo.pause();
-      playButton.textContent = 'Play';
-    }
-  }
-
-  // Initial setup with default values
-  changeSound('beach.mp3');
-  setMeditationTime(10);
+        isPlaying = false;
+        audio.pause();
+        video.pause();
+    });
 });
 
-  
+// Event listeners for sound buttons
+soundButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        if (this.id === 'beach-sound') {
+            video.src = 'videos/beach.mp4';
+            audio.src = 'sounds/beach.mp3';
+        } else {
+            video.src = 'videos/rain.mp4';
+            audio.src = 'sounds/rain.mp3';
+        }
+        if (isPlaying) {
+            audio.play();
+            video.play();
+        }
+    });
+});
+
+// Event listener for play/pause button
+playButton.addEventListener('click', function() {
+    if (isPlaying) {
+        clearInterval(interval);
+        audio.pause();
+        video.pause();
+        playButton.textContent = 'Play';
+    } else {
+        audio.play();
+        video.play();
+        playButton.textContent = 'Pause';
+        interval = setInterval(() => {
+            if (duration > 0) {
+                duration--;
+                updateTimerDisplay();
+            } else {
+                clearInterval(interval);
+                audio.pause();
+                video.pause();
+                playButton.textContent = 'Play';
+                duration = 600; // Reset to default duration
+                updateTimerDisplay();
+                isPlaying = false;
+            }
+        }, 1000);
+    }
+    isPlaying = !isPlaying;
+});
+
+updateTimerDisplay(); // Initialize the timer display
